@@ -1,0 +1,37 @@
+#!/bin/sh
+
+IFS=$'\n'
+usb_names=( $(lsusb | cut -d' ' -f7-) )
+usb_ports=( $(lsusb | cut -d' ' -f6) )
+
+i=1
+for n in "${usb_names[@]}"; do
+    echo "$i) $n (${usb_ports[(($i-1))]})"
+    ((i++))
+done
+
+
+read chosenidx
+((chosenidx--))
+
+chosen_name=${usb_names[$chosenidx]}
+chosen_ports=${usb_ports[$chosenidx]}
+chosen_vendor=$(echo $chosen_ports|cut -d':' -f1)
+chosen_id=$(echo $chosen_ports|cut -d':' -f2)
+
+if virsh list --all | grep win10 | grep -q "fermé"; then
+    echo "VM shutdown, using virt-xml"
+    virt-xml win10 --add-device --hostdev $chosen_ports
+else
+    echo "VM up and running, using attach-device"
+    virt-xml win10 --add-device --hostdev $chosen_ports
+    virsh attach-device win10 /dev/stdin <<EOF
+<hostdev mode='subsystem' type='usb' managed='yes'>
+    <source>
+        <vendor id='0x$chosen_vendor'/>
+        <product id='0x$chosen_id'/>
+      </source>
+</hostdev>
+EOF
+
+fi

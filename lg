@@ -1,0 +1,25 @@
+#!/bin/sh
+
+cleanup() {
+    # kill all processes whose parent is this process
+    pkill -P $$
+}
+
+for sig in INT QUIT HUP TERM; do
+  trap "
+    cleanup
+    trap - $sig EXIT
+    kill -s $sig "'"$$"' "$sig"
+done
+trap cleanup EXIT
+
+disable_screen_saver() {
+  while true; do
+    qdbus org.freedesktop.ScreenSaver /ScreenSaver org.freedesktop.ScreenSaver.SimulateUserActivity    
+    sleep 2
+  done
+}
+
+disable_screen_saver &
+
+looking-glass-client -m 41 -F -s

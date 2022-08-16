@@ -1,0 +1,15 @@
+# /etc/systemd/system/vfio-fix.service
+[Unit]
+Description=Open Nvidia card with vfio
+After=supergfxd.service
+
+[Service]
+Type=oneshot
+ExecCondition=sh -c "supergfxctl -g | grep -q integrated"
+ExecStartPre=sleep 10
+ExecStartPre=supergfxctl -m vfio
+ExecStart=vfio-open 8 0000:01:00.0
+ExecStartPost=supergfxctl -m integrated
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if virsh list --all | grep win10 | grep -q "fermé"; then
+    notify-send "Win10 VM" "Starting Win10 VM..."
+
+    # See checkusb script
+    checkusb >> /var/log/win10/checkusb.log 2>&1
+
+    virsh start win10 >> /var/log/win10/virsh.log 2>&1
+
+    sleep 5
+fi
+
+# Launch looking-glass
+# lg
