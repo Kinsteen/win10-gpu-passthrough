@@ -64,4 +64,4 @@ One other quirk that was quite annoying is that to start the VM, USB devices NEE
 If a USB device is not connected, it will remove it from the XML before starting the VM.
 
 ## Do not go into sleep when looking glass is running
-Just a small script that continuously simulate user activity, so that the pc doesn't go to sleep, because it's not receiving any input (because EvDev)
+Just a small service using systemd-inhibit so that the pc doesn't go to sleep/dim screen, because it's not receiving any input (because EvDev)
