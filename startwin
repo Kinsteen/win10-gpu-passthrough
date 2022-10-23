@@ -3,13 +3,19 @@
 if virsh list --all | grep win10 | grep -q "fermé"; then
     notify-send "Win10 VM" "Starting Win10 VM..."
 
-    # See checkusb script
+    lg &
     checkusb >> /var/log/win10/checkusb.log 2>&1
 
-    virsh start win10 >> /var/log/win10/virsh.log 2>&1
+    log=$(virsh start win10 2>&1)
+    err=$?
+    echo $log >> /var/log/win10/virsh.log
+
+    if [[ $err -ne 0 ]]; then
+        notify-send -u critical "Win10 VM" "Failed to start Win10 VM."
+        #notify-send -u critical "Win10 Error" $log
+        echo $log
+        exit 1
+    fi
 
     sleep 5
 fi
-
-# Launch looking-glass
-# lg

@@ -5,7 +5,7 @@ I've made some changes from this tutorial.
 
 My setup:
 - Arch Linux, linux-zen kernel
-- KDE Plasma as my desktop manager, on X11
+- KDE Plasma as my desktop manager, on Wayland
 - Nvidia DKMS driver, latest
 
 ## Compute mode -> VFIO fix

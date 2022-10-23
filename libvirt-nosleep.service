@@ -1,0 +1,6 @@
+[Unit]
+Description=Preventing sleep while libvirt VM is running
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/systemd-inhibit --what="idle:sleep:shutdown" --why="Libvirt VM is running" --who="Libvirt" --mode=block sleep infinity
