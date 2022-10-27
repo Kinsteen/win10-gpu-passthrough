@@ -16,7 +16,8 @@ or other application using the libvirt API.
   <memory unit='KiB'>10485760</memory>
   <currentMemory unit='KiB'>10485760</currentMemory>
   <memoryBacking>
-    <hugepages/>
+    <source type='memfd'/>
+    <access mode='shared'/>
   </memoryBacking>
   <vcpu placement='static'>12</vcpu>
   <iothreads>1</iothreads>
@@ -203,11 +204,6 @@ or other application using the libvirt API.
     <input type='keyboard' bus='usb'>
       <address type='usb' bus='0' port='3'/>
     </input>
-    <graphics type='spice' autoport='yes'>
-      <listen type='address'/>
-      <image compression='off'/>
-      <gl enable='no'/>
-    </graphics>
     <sound model='ich9'>
       <audio id='1'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x1b' function='0x0'/>
@@ -223,24 +219,25 @@ or other application using the libvirt API.
       <output clientName='win10' connectPorts='Family.*playback_F[LR]'/>
     </audio>
     <video>
-      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x0f' function='0x0'/>
+      <model type='none'/>
     </video>
     <hostdev mode='subsystem' type='pci' managed='yes'>
       <source>
         <address domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
       </source>
       <rom bar='on'/>
-      <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x05' slot='0x00' function='0x0'/>
     </hostdev>
     <hostdev mode='subsystem' type='pci' managed='yes'>
       <source>
         <address domain='0x0000' bus='0x01' slot='0x00' function='0x1'/>
       </source>
-      <rom bar='on'/>
-      <address type='pci' domain='0x0000' bus='0x05' slot='0x00' function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
     </hostdev>
-    <memballoon model='none'/>
+    <memballoon model='virtio'>
+      <stats period='5'/>
+      <address type='pci' domain='0x0000' bus='0x07' slot='0x00' function='0x0'/>
+    </memballoon>
   </devices>
   <qemu:commandline>
     <qemu:arg value='-overcommit'/>
@@ -248,7 +245,7 @@ or other application using the libvirt API.
     <qemu:arg value='-acpitable'/>
     <qemu:arg value='file=/var/lib/libvirt/images/acpitable.bin'/>
     <qemu:arg value='-device'/>
-    <qemu:arg value='ivshmem-plain,id=shmem1,memdev=looking-glass'/>
+    <qemu:arg value='ivshmem-plain,id=shmem0,memdev=looking-glass'/>
     <qemu:arg value='-object'/>
     <qemu:arg value='memory-backend-file,id=looking-glass,mem-path=/dev/kvmfr0,size=32M,share=yes'/>
     <qemu:env name='PIPEWIRE_RUNTIME_DIR' value='/run/user/1000'/>
