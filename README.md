@@ -9,7 +9,7 @@ My setup:
 - Nvidia DKMS driver, latest
 
 ## Compute mode -> VFIO fix
-On my PC, if I used compute mode without launching the VM, the VM won't boot after, crashing at the start. I suspect that this is due to the memory being allocated wrongly by the Nvidia driver...
+On my PC, if I used compute mode without launching the VM, the VM won't boot after, crashing at the start. This is due to the memory being allocated by the Nvidia driver not matching the caching technique expected by the VFIO driver, in the Page Attribute Table. Nvidia allocates a write-combining page on some addresses, while vfio-pci driver expects uncached-minus. This behavior is expected and it seems to NOT be a bug in the Linux kernel/drivers.
 
 In QEMU logs (spamming):
 ```
@@ -25,11 +25,101 @@ In dmesg (spamming):
 
 Some people suggested that /dev/nvidia was still in use, which was not the case, or a BIOS update was the culprit, which wasn't the case.
 
+Also, this behavior only exists on kernel 5.14 and onwards. On kernels earlier, 5.13, 5.12 etc, this is NOT a problem. Something introduced on this kernel version creates this behavior.
+
+### First solution: easiest and recommended
 The way I fixed it was to launch a small program, allocating memory on the GPU WITH the vfio-pci driver.
 
 This is what I used: https://raw.githubusercontent.com/awilliam/tests/master/vfio-pci-device-open.c
 
 And then, a small systemd service to launch it on startup and we're good! (see vfio-fix.service)
+
+This way, the VM will launch without complaining. Also, the Nvidia driver will be able to load and function properly for the most part, even with the "wrong" caching technique on the allocated pages.
+
+However, on my specific machine, it means that I have awful performance on specific Wine games. For example, Cult of the Lamb drops from 144 fps (VSync) to 8 fps. This is a very strange bug, that is also reproducible on other games, to a lesser extent. CotL is the one game I went to test with, as it's fast to boot and the performance drop is clearly visible.
+
+Another solution exists, which requires patching the Linux Kernel.
+
+### Second solution: patching the Linux kernel
+For this solution, you need to fetch the sources of the Linux kernel, and compile it yourself while changing a little function.
+
+Here is the code responsible for checking the conflicts on page memory allocation according to the caching technique:
+
+
+File arch/x86/mm/pat/memtype_interval.c, line 78 (Linux kernel version 6.1-rc3)
+```c
+static int memtype_check_conflict(u64 start, u64 end,
+				  enum page_cache_mode reqtype,
+				  enum page_cache_mode *newtype)
+{
+	struct memtype *entry_match;
+	enum page_cache_mode found_type = reqtype;
+
+	entry_match = interval_iter_first(&memtype_rbroot, start, end-1);
+	if (entry_match == NULL)
+		goto success;
+
+	if (entry_match->type != found_type && newtype == NULL)
+		goto failure;
+
+	dprintk("Overlap at 0x%Lx-0x%Lx\n", entry_match->start, entry_match->end);
+	found_type = entry_match->type;
+
+	entry_match = interval_iter_next(entry_match, start, end-1);
+	while (entry_match) {
+		if (entry_match->type != found_type)
+			goto failure;
+
+		entry_match = interval_iter_next(entry_match, start, end-1);
+	}
+success:
+	if (newtype)
+		*newtype = found_type;
+
+	return 0;
+
+failure:
+	pr_info("x86/PAT: %s:%d conflicting memory types %Lx-%Lx %s<->%s\n",
+		current->comm, current->pid, start, end,
+		cattr_name(found_type), cattr_name(entry_match->type));
+
+	return -EBUSY;
+}
+```
+
+Here we can see the error message we got earlier in dmesg: `conflicting memory types xxxxxxx`.
+
+To remove the check, and allocation page anyway with the different caching technique, we just need to remove this check that makes it fail. Here is the modification that makes it work:
+
+```c
+    ...
+	entry_match = interval_iter_first(&memtype_rbroot, start, end-1);
+	if (entry_match == NULL)
+		goto success;
+
+	if (entry_match->type != found_type && newtype == NULL)
+		goto failure;
+
+	dprintk("Overlap at 0x%Lx-0x%Lx\n", entry_match->start, entry_match->end);
+	found_type = entry_match->type;
+
+	// entry_match = interval_iter_next(entry_match, start, end-1);
+	// while (entry_match) {
+	// 	if (entry_match->type != found_type)
+	// 		goto failure;
+
+	// 	entry_match = interval_iter_next(entry_match, start, end-1);
+	// }
+    ...
+```
+
+This removes the check that triggers the error. With the patch, and this kernel, it works perfectly.
+
+We can boot in integrated, switch in compute mode, play some games, switch to VFIO and boot the VM. The VM doesn't seem to have a performance penalty either.
+
+With this, we can have the best of both worlds!
+
+CAUTION: I am daily driving this patched kernel without any problem yet. I cannot guarantee that this is definitely stable! It could cause a kernel panic, driver crashes, and maybe data loss.
 
 ## Mouse not left-clicking when keyboard is typing
 Another problem I had was the mouse. I used EvDev to passthough my (internal and external) keyboard and my external mouse. But when gaming for example, my left-click would be disabled as long as I pressed keys on the keyboard, specifically letter keys.
