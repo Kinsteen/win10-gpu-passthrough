@@ -119,6 +119,8 @@ We can boot in integrated, switch in compute mode, play some games, switch to VF
 
 With this, we can have the best of both worlds!
 
+See `pat_patch.diff` to have a working patch. You need to apply the patch, and have `skippatcheck` in the kernel command line to activate the workaround.
+
 CAUTION: I am daily driving this patched kernel without any problem yet. I cannot guarantee that this is definitely stable! It could cause a kernel panic, driver crashes, and maybe data loss.
 
 ## Mouse not left-clicking when keyboard is typing
