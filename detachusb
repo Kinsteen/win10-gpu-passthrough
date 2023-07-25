@@ -21,7 +21,6 @@ chosen_ports=${arr[$chosenidx]}
 chosen_vendor=$(echo $chosen_ports|cut -d':' -f1)
 chosen_id=$(echo $chosen_ports|cut -d':' -f2)
 
-virt-xml win10 --remove-device --hostdev $chosen_ports
 virsh detach-device win10 /dev/stdin <<EOF
 <hostdev mode='subsystem' type='usb' managed='yes'>
     <source>

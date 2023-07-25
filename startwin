@@ -1,14 +1,21 @@
 #!/bin/sh
 
+#set -x
+
+if ! lspci -k | grep -i geforce -A 2 | grep -i "driver in use" | grep -q vfio; then
+    echo "Nvidia card is not binded to VFIO"
+    exit 1
+fi
+
 if virsh list --all | grep win10 | grep -q "fermé"; then
     notify-send "Win10 VM" "Starting Win10 VM..."
 
-    lg &
     checkusb >> /var/log/win10/checkusb.log 2>&1
 
     log=$(virsh start win10 2>&1)
     err=$?
     echo $log >> /var/log/win10/virsh.log
+    lg
 
     if [[ $err -ne 0 ]]; then
         notify-send -u critical "Win10 VM" "Failed to start Win10 VM."
@@ -16,6 +23,4 @@ if virsh list --all | grep win10 | grep -q "fermé"; then
         echo $log
         exit 1
     fi
-
-    sleep 5
 fi

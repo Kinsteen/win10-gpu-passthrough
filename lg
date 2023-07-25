@@ -1,3 +1,17 @@
 #!/bin/sh
 
-looking-glass-client -m 41 -F -s -f /dev/kvmfr0
+if virsh list --all | grep win10 | grep -q "pause"; then
+	sudo systemctl set-property --runtime -- user.slice AllowedCPUs=0-3
+	sudo systemctl set-property --runtime -- system.slice AllowedCPUs=0-3
+	sudo systemctl set-property --runtime -- init.scope AllowedCPUs=0-3
+	virsh resume win10
+fi
+
+looking-glass-client -m 41 -f /dev/kvmfr0
+
+if virsh list --all | grep win10 | grep -q "en cours"; then
+	virsh suspend win10
+    sudo systemctl set-property --runtime -- user.slice AllowedCPUs=0-15
+    sudo systemctl set-property --runtime -- system.slice AllowedCPUs=0-15
+    sudo systemctl set-property --runtime -- init.scope AllowedCPUs=0-15
+fi

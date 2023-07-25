@@ -42,10 +42,10 @@ else
     esac
 fi
 
-VERSION=$(grep -m 1 VERSION Makefile | sed 's/^.*= //g')
-PATCHLEVEL=$(grep -m 1 PATCHLEVEL Makefile | sed 's/^.*= //g')
-SUBLEVEL=$(grep -m 1 SUBLEVEL Makefile | sed 's/^.*= //g')
-EXTRAVERSION=$(grep -m 1 EXTRAVERSION Makefile | sed 's/^.*= //g')
+VERSION=$(grep -m 1 VERSION Makefile | sed 's/^.*=//g' | sed 's/ //g')
+PATCHLEVEL=$(grep -m 1 PATCHLEVEL Makefile | sed 's/^.*=//g' | sed 's/ //g')
+SUBLEVEL=$(grep -m 1 SUBLEVEL Makefile | sed 's/^.*=//g' | sed 's/ //g')
+EXTRAVERSION=$(grep -m 1 EXTRAVERSION Makefile | sed 's/^.*=//g' | sed 's/ //g')
 
 version=$VERSION.$PATCHLEVEL.$SUBLEVEL$EXTRAVERSION
 
