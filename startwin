@@ -7,6 +7,11 @@ if ! lspci -k | grep -i geforce -A 2 | grep -i "driver in use" | grep -q vfio; t
     exit 1
 fi
 
+if ! [[ -e /dev/disk/by-id/usb-SanDisk_Extreme_55AE_323232353754443034333130-0:0 ]]; then
+    echo "Connect SSD of Windows"
+    exit 1
+fi
+
 if virsh list --all | grep win10 | grep -q "fermé"; then
     notify-send "Win10 VM" "Starting Win10 VM..."
 

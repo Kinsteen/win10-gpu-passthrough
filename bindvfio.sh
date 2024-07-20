@@ -1,8 +1,8 @@
 if [[ -f /sys/class/drm/card1-DP-1/status ]]; then
-    if [[ $(cat /sys/class/drm/card1-DP-1/status) == "connected" ]]; then
-        echo "Disconnect DP screen before switching"
-        exit 1
-    fi
+    while [[ $(cat /sys/class/drm/card1-DP-1/status) == "connected" ]]; do
+        echo "Waiting for screen to disconnect..."
+        sleep 1
+    done
 fi
 
 set -x
